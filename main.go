@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -28,8 +29,61 @@ type Proxy struct {
 	proxy  *httputil.ReverseProxy
 }
 
+type FilterResponse struct {
+	FilteredText string `json:"filteredText"`
+	Context      string `json:"context"`
+	DocumentId   string `json:"documentId"`
+}
+
+func Filter(endpoint string, input string, context string, documentId string, filterProfile string) FilterResponse {
+
+	var text = []byte(input)
+
+	base, err := url.Parse(endpoint + "/api/filter")
+
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+	params := url.Values{}
+	params.Add("c", context)
+	params.Add("d", documentId)
+	params.Add("p", filterProfile)
+
+	base.RawQuery = params.Encode()
+
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	request, err := http.NewRequest("POST", base.String(), bytes.NewReader(text))
+
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+	request.Header.Add("Content-Type", "text/plain")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	documentId = response.Header.Get("x-document-id")
+
+	responseData, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response.Body.Close()
+
+	return FilterResponse{FilteredText:string(responseData), Context:context, DocumentId:documentId}
+
+}
+
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
+
+	philter_endpoint := getEnv("PHILTER_ENDPOINT", "https://10.0.2.51:8080")
+	log.Println("Proxying request to " + philter_endpoint)
 
 	var o OpenAIRequest
 	err := json.NewDecoder(r.Body).Decode(&o)
@@ -39,9 +93,8 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := 0; i < len(o.Messages); i++ {
-		fmt.Fprintf(w, "Content: %+v", o.Messages[i].Content)
-		// TODO: Call Philter with the content and replace the content with Philter's response.
-		o.Messages[i].Content = "Who won the World Series in 1999?"
+		filterResponse := Filter(philter_endpoint, o.Messages[i].Content, "context", "docid", "default")
+		o.Messages[i].Content = filterResponse.FilteredText
 	}
 
 	j, err := json.Marshal(o)
