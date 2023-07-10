@@ -2,7 +2,14 @@
 
 ## Introduction
 
-This project is a proxy for OpenAI that uses Philter to remove PII, PHI, and other sensitive information from the request before sending the request to OpenAI.
+This project is a proxy for OpenAI that uses [Philter](https://philterd.ai/philter/) to remove PII, PHI, and other sensitive information from the request before sending the request to OpenAI. If you don't have a running instance of Philter, you can launch one in your cloud at https://philterd.ai/philter/.
+
+## Running the Proxy
+
+```
+export PHILTER_ENDPOINT=https://your-philter-ip:8080
+./philter-openai-proxy
+```
 
 ## Usage
 
