@@ -8,6 +8,8 @@ This project is a proxy for OpenAI that uses [Philter](https://philterd.ai/philt
 
 The proxy works by sending requests destined for OpenAI first to Philter where the sensitive information is redacted per Philter's configuration. The redacted text is then sent to OpenAI. For example, if you send the following text "How old is John Smith?", the proxy and Philter will remove the text "John Smith" from the request. The redacted request sent to OpenAI will be "How old is {{{REDACTED-person}}}?"
 
+Check out the [blog post](https://blog.philterd.ai/removing-pii-phi-from-openai-chat-gpt-api-requests-551f57cef64d) that describes this repository.
+
 ## Running the Proxy
 
 ```
