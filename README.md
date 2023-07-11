@@ -32,7 +32,7 @@ curl http://localhost:8080/v1/chat/completions \
 The proxy listens over TLS and requires a certificate and private key. You can generate a self-signed certificate with the following command:
 
 ```
-make certs
+make cert
 ```
 
 ## License
